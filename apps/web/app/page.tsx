@@ -1,102 +1,108 @@
-import Image, { type ImageProps } from "next/image";
-import { Button } from "@repo/ui/button";
-import styles from "./page.module.css";
+"use client";
+import { useState } from "react";
+import axios from "axios";
 
-type Props = Omit<ImageProps, "src"> & {
-  srcLight: string;
-  srcDark: string;
-};
-
-const ThemeImage = (props: Props) => {
-  const { srcLight, srcDark, ...rest } = props;
-
-  return (
-    <>
-      <Image {...rest} src={srcLight} className="imgLight" />
-      <Image {...rest} src={srcDark} className="imgDark" />
-    </>
-  );
+type urlData = {
+  originalUrl: string;
+  shortUrl: string;
+  createdAt: string;
 };
 
 export default function Home() {
-  return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <ThemeImage
-          className={styles.logo}
-          srcLight="turborepo-dark.svg"
-          srcDark="turborepo-light.svg"
-          alt="Turborepo logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol>
-          <li>
-            Get started by editing <code>apps/web/app/page.tsx</code>
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [inputUrl, setInputUrl] = useState("");
+  const [url, setUrl] = useState<urlData[]>([]);
 
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new/clone?demo-description=Learn+to+implement+a+monorepo+with+a+two+Next.js+sites+that+has+installed+three+local+packages.&demo-image=%2F%2Fimages.ctfassets.net%2Fe5382hct74si%2F4K8ZISWAzJ8X1504ca0zmC%2F0b21a1c6246add355e55816278ef54bc%2FBasic.png&demo-title=Monorepo+with+Turborepo&demo-url=https%3A%2F%2Fexamples-basic-web.vercel.sh%2F&from=templates&project-name=Monorepo+with+Turborepo&repository-name=monorepo-turborepo&repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fturborepo%2Ftree%2Fmain%2Fexamples%2Fbasic&root-directory=apps%2Fdocs&skippable-integrations=1&teamSlug=vercel&utm_source=create-turbo"
-            target="_blank"
-            rel="noopener noreferrer"
+  const handleSubmit = async () => {
+    if (!inputUrl) {
+      alert("Please enter a URL");
+      return;
+    }
+    try {
+      const response = await axios.post("http://localhost:3001/", { url: inputUrl });
+      const newUrlData: urlData = {
+        originalUrl: response.data.originalUrl,
+        shortUrl: response.data.shortUrl,
+        createdAt: new Date().toLocaleString(),
+      };
+
+      setUrl((prev) => [...prev, newUrlData]);
+      setInputUrl("");
+    } catch (error) {
+      console.error("Error submitting URL:", error);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-100 to-purple-200 flex flex-col items-center py-12 px-4">
+      <div className="w-full max-w-xl bg-white rounded-2xl shadow-lg p-8">
+        <h1 className="text-4xl font-bold text-center text-purple-700 mb-2">Shortly</h1>
+        <p className="text-center text-gray-500 mb-8">Shorten your URLs in one click!</p>
+        <div className="flex flex-col sm:flex-row gap-4 mb-8">
+          <input
+            type="text"
+            value={inputUrl}
+            onChange={(e) => setInputUrl(e.target.value)}
+            placeholder="Enter your URL"
+            className="flex-1 px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-400 transition"
+          />
+          <button
+            onClick={handleSubmit}
+            className="px-6 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition"
           >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            href="https://turborepo.com/docs?utm_source"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.secondary}
-          >
-            Read our docs
-          </a>
+            Shorten
+          </button>
         </div>
-        <Button appName="web" className={styles.secondary}>
-          Open alert
-        </Button>
-      </main>
-      <footer className={styles.footer}>
-        <a
-          href="https://vercel.com/templates?search=turborepo&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          href="https://turborepo.com?utm_source=create-turbo"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to turborepo.com →
-        </a>
-      </footer>
+        <div>
+          <h2 className="text-2xl font-semibold text-purple-700 mb-4">Shortened URLs</h2>
+          <div className="overflow-x-auto">
+            <table className="min-w-full bg-white rounded-lg shadow">
+              <thead>
+                <tr>
+                  <th className="px-4 py-2 text-left text-gray-600">Original URL</th>
+                  <th className="px-4 py-2 text-left text-gray-600">Shortened URL</th>
+                  <th className="px-4 py-2 text-left text-gray-600">Created At</th>
+                  <th className="px-4 py-2 text-left text-gray-600">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {url.map((u, key) => (
+                  <tr key={key} className="border-t">
+                    <td className="px-4 py-2 break-all text-blue-700">{u.originalUrl}</td>
+                    <td className="px-4 py-2">
+                      <a
+                        href={u.shortUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-purple-600 underline hover:text-purple-800"
+                      >
+                        {u.shortUrl}
+                      </a>
+                    </td>
+                    <td className="px-4 py-2 text-gray-500">{u.createdAt}</td>
+                    <td className="px-4 py-2">
+                      <button
+                        className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+                        onClick={() => navigator.clipboard.writeText(u.shortUrl)}
+                      >
+                        Copy
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {url.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="px-4 py-6 text-center text-gray-400">
+                      No URLs shortened yet.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
+
+
